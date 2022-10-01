@@ -14,6 +14,12 @@ public class Option extends OptionData{
 		switch(type) {
 		case "user":
 			return OptionType.USER;
+		case "channel":
+			return OptionType.CHANNEL;
+		case "role":
+			return OptionType.ROLE;
+		case "subcommand":
+			return OptionType.SUB_COMMAND;
 		}
 		return OptionType.STRING;
 	}

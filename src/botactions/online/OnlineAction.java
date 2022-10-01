@@ -1,5 +1,6 @@
 package botactions.online;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -9,7 +10,12 @@ import org.json.JSONTokener;
 
 import botactions.BotAction;
 import net.dv8tion.jda.api.entities.TextChannel;
-
+/**
+ * An extension of the BotAcion class adding functionality that has
+ * to do with accessing online content
+ * @author Spartak
+ *
+ */
 public final class OnlineAction extends BotAction {
 	private static final Connector connector = new Connector();
 	/**
@@ -18,7 +24,7 @@ public final class OnlineAction extends BotAction {
 	 * @param channel the Text channel that the image is to be sent to
 	 */
 	public static void sendImageInChannel(String imageAddress, TextChannel channel) {
-		sendFileInChannel(connector.saveImage(imageAddress, "res/temp.png"), channel);
+		sendFileInChannel(saveImage(imageAddress, "res/temp.png"), channel);
 	}
 	/**
 	 * Returns the next line of the source HTML code from the URL you are currently 
@@ -54,5 +60,15 @@ public final class OnlineAction extends BotAction {
 	 */
 	public static void closeConnection() {
 		connector.close();
+	}
+	/**
+	 * Takes the image at the given URL and saves it to a file with the given file name.
+	 * File does not need to already exist. If it does not exist, then one will be created.
+	 * @param url where the image is located
+	 * @param fileName the name of the file to which you want to save the image.
+	 * @return
+	 */
+	public static File saveImage(String url, String fileName) {
+		return connector.saveImage(url, fileName);
 	}
 }

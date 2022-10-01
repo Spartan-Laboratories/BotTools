@@ -18,7 +18,6 @@ import javax.security.auth.login.LoginException;
 import org.w3c.dom.Node;
 
 import com.bottools.commands.Command;
-import com.bottools.commands.slashcommands.SlashCommand;
 import com.bottools.main.Parser.CommandContainer;
 
 import botactions.BotAction;
@@ -57,15 +56,15 @@ public abstract class Botmain implements Runnable{
 		// My systems
 		defineLogWriter();
 		gdp = new GuildDataParser();
+		console = new Console();
+		console.start();
 		// Bot setup
 		initializeBotExistence();	//Initial bot setup
 		listCommands();				//Old school commands setup
 		listSlashCommands();		//Fancy new "slash" commands setup
 		createAllSlashCommands();
 		// My Systems again
-		console = new Console();
-		console.start();
-		gdp.updateServerDatabase();
+		gdp.updateServerDatabase();	//Must be after bot and console initialization
 		reader.setDocument("BotData.xml");
 		new Thread(this).start();
 	}
@@ -86,6 +85,7 @@ public abstract class Botmain implements Runnable{
 			.addEventListeners(listener = createListener())
 			.enableCache(CacheFlag.VOICE_STATE)
 			.enableCache(CacheFlag.EMOTE) 
+			.enableCache(CacheFlag.ONLINE_STATUS)
 			.setMemberCachePolicy(MemberCachePolicy.ALL)
 			.build() ;
 			

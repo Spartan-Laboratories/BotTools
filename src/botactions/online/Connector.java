@@ -37,17 +37,9 @@ class Connector{
 
 			isOpen = true;
 			URL url = new URL(urlName);
-			System.setProperty("http.agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
+			System.setProperty("http.agent", "Mozilla/4.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
 			connection = url.openConnection();
-			connection.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");;
-			/*
-			connection.addRequestProperty("Cookie", "__cf_bm=18cB88vBUa0RFRqnXNlmTpiIsNfGJsDSM6wxYphkfWE-1659143815-0-AWw5JsN1hOhfwXVUCQdFHH8ViVdgPKTVb44MQeKbhPpuoZbSgjmt7gVIIh1b3fflEAfyZ6kYzmk0dV17gw2u/iU="); 
-			connection.addRequestProperty("Cookie", "_ga=GA1.2.447942429.1658692787"); 
-			connection.addRequestProperty("Cookie", "_gid=GA1.2.2004143857.1659143816"); 
-			connection.addRequestProperty("Cookie", "_ga=GA1.2.447942429.1658692787"); 
-			connection.addRequestProperty("Cookie", "_ga=GA1.2.447942429.1658692787"); 
-			connection.addRequestProperty("Cookie", "_ga=GA1.2.447942429.1658692787");
-			*/
+			connection.addRequestProperty("User-Agent", "Mozilla/4.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");;
 			openCount++;
 			reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 			
@@ -74,7 +66,6 @@ class Connector{
 	}
 	
 	protected final File saveImage(String imageUrl, String destinationFile){
-		URL url = null;
 		try {
 		    open(imageUrl);
 		    InputStream is = connection.getInputStream();
@@ -90,7 +81,7 @@ class Connector{
 			os.close();
 			close();
 		}catch(IOException e) {
-			System.out.println("Could not save image from url: " + url.toString());
+			System.out.println("Could not save image from url: " + imageUrl);
 			e.printStackTrace();
 		}
 		

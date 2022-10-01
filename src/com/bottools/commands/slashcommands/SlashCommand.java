@@ -2,8 +2,6 @@ package com.bottools.commands.slashcommands;
 
 import java.util.ArrayList;
 
-import com.bottools.main.Botmain;
-
 import botactions.online.OnlineAction;
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;

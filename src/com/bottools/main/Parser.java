@@ -54,7 +54,6 @@ public class Parser {
 		if(hasSSCG)		args.add(sscgName);
 		if(hasSSC)		args.add(sscName);
 		if(hasOptions)	options.forEach(option ->{
-							args.add(option.getType().toString());
 							args.add(option.getAsString());
 						});
 		

@@ -6,16 +6,26 @@ import net.dv8tion.jda.api.entities.Member;
 
 public abstract class GameStatsCommand extends OnlineCommand {
 	protected String gameName;
-	public GameStatsCommand(String gameName) {
+	protected OrganizationCommand show, id;
+	protected GameStatsCommand(String gameName) {
+		super(gameName);
 		this.gameName = gameName;
 		isSubCommandRequired(true);
+
+		
+		makeSlashCommand();
+
+		new MethodCommand(this, "showstats", "Show the target player's stats", this::showStats);
+		new MethodCommand(this, "lastgame", "Show the stats from the last game that was played", this::lastGame)
+		.addOption("user", "name", "the server member whose game you want to see", false);
 		new SCSetID();
 		new SCGetID();
-		new SCShowStats();
-		new OrganizationCommand(this, "id").addCommand("set", "setid").addCommand("get", "getid").addCommand("show", "getid");
-		new OrganizationCommand(this, "set").addCommand("id", "setid");
-		new OrganizationCommand(this, "get").addCommand("id", "getid");
-		new OrganizationCommand(this, "show").addCommand("id", "getid");
+		
+		setter().addCommand("id", "setid");
+		getter().addCommand("id", "getid").addCommand("stats", "showstats");
+		id	= new OrganizationCommand(this, "id").addCommand("set", "setid").addCommand("get", "getid").addCommand("show", "getid");
+		show= new OrganizationCommand(this, "show").addCommand("id", "getid").addCommand("stats", "showstats");
+		new OrganizationCommand(this, "last").addCommand("game", "lastgame");
 	}
 	protected class SCSetID extends SubCommand{
 		protected SCSetID() {
@@ -24,10 +34,11 @@ public abstract class GameStatsCommand extends OnlineCommand {
 			+ "For example:\n"
 			+ "`/" + GameStatsCommand.this.getName() + " setid *in-game id* @forthisperson` to set the ID for the mentioned user. Or\n"
 			+ "`/" + GameStatsCommand.this.getName() + " setid *in-game id*` to set the ID for yourself");
+			addOption("string", "id", "the steam/dotabuff id", true);
 		}
 		protected boolean execute(String[] args) { 
-			Botmain.gdp.setGameID(guild, tMember, gameName, args[0]);
-			say("The " + gameName + " ID of " + tMember.getEffectiveName() + " has been set to " + getUserID());
+			Botmain.gdp.setGameID(getGuild(), getTargetMember(), gameName, args[0]);
+			say("The " + gameName + " ID of " + getTargetMember().getEffectiveName() + " has been set to " + getUserID());
 			return true;
 		}
 	}
@@ -40,43 +51,31 @@ public abstract class GameStatsCommand extends OnlineCommand {
 		protected boolean execute(String[] args) {
 			String id = getUserID();
 			if(id == null) 	sendNoIDMessage();
-			else 			say("The in-game ID of " + tMember.getUser().getName() + " is " + id);
+			else 			say("The in-game ID of " + getTargetMember().getUser().getName() + " is " + id);
 			return true;
 		}
 	}
-	private final class SCShowStats extends SubCommand{
-		private SCShowStats() {
-			super(GameStatsCommand.this, "showstats");
-			addAlias("stats");
-			setHelpMessage("Shows a person's Valorant stats if their ID has been set.\n"
-					+ "Tag someone to see their stats or don't tag anyone to see your own.\n"
-					+ "For example:\n"
-					+ "`/v showstats @person` to see their stats. Or\n"
-					+ "`/v showstats` to see your stats");
-		}
-		protected boolean execute(String[] args) {
-			showStats();
-			return true;
-		}
-	}
+	
 	/**
 	 * Returns the in-game username of the guild member that is the target of this command
 	 * @return In-game username of the target member
 	 */
 	protected String getUserID() {
-		return getUserID(tMember);
+		return getUserID(getTargetMember());
 	}
 	protected String getUserID(Member member) {
-		return Botmain.gdp.getID(guild, member, gameName);
+		return Botmain.gdp.getID(getGuild(), member, gameName);
 	}
 	protected void sendNoIDMessage() {
 		say("This person's " + gameName + " ID has not been set. Use:\n"
 				+ "`/" + GameStatsCommand.this.getName() + " setid *in-game id* @forthisperson` to set someone's ID");
 	}
-	protected boolean execute(String[] args) {
+	protected boolean execute(String[] args) { 
+		assert false;
 		return false;
 	}
-	protected abstract void showStats();
+	protected abstract boolean showStats(String[] args);
+	protected abstract boolean lastGame(String[] args);
 
 	@Override
 	protected boolean connect(String URL) {

@@ -17,13 +17,12 @@ public abstract class OnlineCommand extends Command{
 	 * opened with the {@link OnlineCommand#open()} function.
 	 * @param primaryAddress the primary URL that will be accessed by this command
 	 */
-	protected OnlineCommand(String primaryAddress) {
-		super();
+	protected OnlineCommand(String name, String primaryAddress) {
+		super(name);
 		this.primaryAddress = primaryAddress;
 	}
-	protected OnlineCommand() {
-		// TODO see if any child classes are calling this constructor when they should be calling the other one
-		this("");
+	protected OnlineCommand(String name) {
+		this(name,"");
 	}
 	
 	protected String getData(){
@@ -99,7 +98,7 @@ public abstract class OnlineCommand extends Command{
 	protected boolean connect() {
 		return connect(primaryAddress);
 	}
-	protected void close() {
+	protected void disconnect() {
 		OnlineAction.closeConnection();
 	}
 	protected boolean connect(String address) {

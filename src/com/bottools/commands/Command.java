@@ -1,6 +1,8 @@
 package com.bottools.commands;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +27,11 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyAction;
+import net.dv8tion.jda.internal.utils.Checks;
 /**
  * The command superclass that all command subclasses inherit from. When creating a new command subclass it must 
  * <ul>
@@ -35,10 +41,10 @@ import net.dv8tion.jda.api.requests.restaction.interactions.ReplyAction;
  * aliases using {@link #addAlias(String...)}
  * </ul>
  * <h6>Use:</h6><pre>CommandName <b>extends</b> Command{
- * 	public CommandName(){
+ * 	<b>public</b> CommandName(){
  *		<b>super</b>();
  * 		setCommandName("commandname");
- * 		addAlias("optionalalias");
+ * 		addAlias("alias"); 	// Optional
  * 	}
  * 	<b>public boolean</b> execute(){
  * 		Botmain.out("The command has been executed");
@@ -60,18 +66,19 @@ public abstract class Command{
 	 */
 	protected boolean debug;
 	protected Guild guild;
-	protected Member member, tMember;
+	private Member member;
 	protected User user;
-	protected TextChannel channel;
+	private TextChannel channel;
 	protected Message message;
 	protected List<Member> tagged;
 	protected JDA jda = Botmain.jda;
 	protected int terminalArg;
 	protected EmbedBuilder eb;
 	protected String[] args;
+	private Member taggedMember;
 	private String paramNames, aliases;
 	private String commandName;
-	private Map<String, Command> subCommands = new HashMap<String, Command>();
+	private Map<String, SubCommand> subCommands = new HashMap<String, SubCommand>();
 	private boolean subCommandRequired;
 	private boolean isSlashCommand;
 	private String noSubCommandDescription;
@@ -91,16 +98,18 @@ public abstract class Command{
 	protected final ArrayList<String> aliasList = new ArrayList<String>();
 	protected ReplyAction deferredReply;
 	private SlashCommandEvent scEvent;
+	private OrganizationCommand get, set;
 	/**
 	 * The only constructor in the class. It is required that this constructor is called from the constructors of subclasses.
 	 * Otherwise various help message and error report bugs will occur.
 	 */
-	protected Command() {
+	protected Command(String commandName) {
 		paramNames = "";
 		aliases = "";
-		commandName = "name not set";
+		setCommandName(commandName);
 		resetEmbedBuilder();
 		setHelpMessage();
+		generateSlashCommandData();
 	}
 	/**
 	 * Takes in a {@link MessageReceivedEvent} and sets it as this command's event for the execution of the following commands. 
@@ -117,7 +126,7 @@ public abstract class Command{
 		channel = event.getChannel();
 		message = event.getMessage();
 		tagged = message.getMentionedMembers();
-		tMember = tagged.size() == 0 ? member : tagged.get(0);
+		taggedMember = tagged.size() == 0 ? member : tagged.get(0);
 		return this;
 	}
 	/**
@@ -144,23 +153,25 @@ public abstract class Command{
 	 * @return <b>true</b> if this is the first time that this method has been called allowing this method to execute correctly
 	 * <br><b>false</b> if the command name had already been set and this method was not executed.
 	 */
-	protected boolean setCommandName(String commandName) {
+	private boolean setCommandName(String commandName) {
 		if(hasName)
 			return false;
 		hasName = true;
-		this.commandName = commandName.toLowerCase();
-		addAlias(this.commandName);
+		aliasList.add(this.commandName = commandName.toLowerCase().replaceAll(" ", ""));
 		return true;
 	}
 	/**
 	 * Outputs the given message in the text channel of the event set by {@link #setEvent(GuildMessageReceivedEvent)}
 	 * @param message - the message that is to be written in the text channel
 	 */
-	public Message say(String message) {
-		return BotAction.say(channel, message);
+	protected Message say(String message) {
+		return BotAction.say(getChannel(), message);
 	}
-	public void show(String url) {
-		OnlineAction.sendImageInChannel(url, channel);
+	protected void show(String url) {
+		OnlineAction.sendImageInChannel(url, getChannel());
+	}
+	protected void show(File file) {
+		BotAction.sendFileInChannel(file, getChannel());
 	}
 	
 	/**
@@ -170,7 +181,7 @@ public abstract class Command{
 	 * @param message - the message that is to be written in the text channel.
 	 */
 	protected void say(int secondsDelay, String message) {
-		channel.sendMessage(message).completeAfter(secondsDelay, TimeUnit.SECONDS);
+		getChannel().sendMessage(message).completeAfter(secondsDelay, TimeUnit.SECONDS);
 	}
 	/**
 	 * Return the primary name of this command as it was set when calling {@link #setCommandName(String)}.
@@ -218,8 +229,9 @@ public abstract class Command{
 						+ "\nTo show a help message for a specific sub-command use: /help " + getName() + " [sub-command name]";
 		
 	}
-	protected boolean preProcess(String[] args) {
-		this.args = args;
+	protected boolean checkTreatAsSubCommand(String[] args) {
+		if(args.length == 0)
+			return false;
 		if(isValidSubCommand(args[0]))
 			return true;
 		
@@ -276,7 +288,7 @@ public abstract class Command{
 		return newArgs;
 	}
 	
-	protected final void resetEmbedBuilder() {
+	private final void resetEmbedBuilder() {
 		eb = new EmbedBuilder();
 	}
 	protected final String[] getSecondaryArgs(String[] args) {
@@ -287,7 +299,7 @@ public abstract class Command{
 			secondaryArgs[i-1] = args[i];
 		return secondaryArgs;
 	}
-	protected final void addSubCommand(String commandName, Command command) {
+	protected final void addSubCommand(String commandName, SubCommand command) {
 		subCommands.put(commandName, command);
 		setHelpMessage();
 	}
@@ -297,7 +309,7 @@ public abstract class Command{
 	private boolean isValidSubCommand(String name) {
 		return subCommands.containsKey(name);
 	}
-	protected Command getSubCommand(String name) {
+	protected SubCommand getSubCommand(String name) {
 		if(!isValidSubCommand(name))
 			say("No sub-command \"" + name+ "\" exists");
 		return subCommands.get(name);
@@ -337,20 +349,23 @@ public abstract class Command{
 		return eb.build(); 
 	}
 	protected void sendEmbed() {
-		channel.sendMessage(new MessageBuilder(eb.build()).build()).queue();
+		getChannel().sendMessage(new MessageBuilder(eb.build()).build()).queue();
+		resetEmbedBuilder();
 	}
 	public boolean handle(CommandContainer commandText) {
+	//	System.out.println("Handling event with name: " + commandText.commandName + 
+	//			"\nAnd args: \" " + Command.concatArgs(commandText.args) + "\"");
 		usedCommandName = commandText.commandName;
 		args = commandText.args;
-		if(preProcess(args)) {
+		if(checkTreatAsSubCommand(args)) {
 			commandText.commandName = args[0];
 			commandText.args = getSecondaryArgs(args);
-			return getSubCommand(args[0].toLowerCase()).handle(commandText);
+			return getSubCommand(args[0].toLowerCase()).handle(commandText);//setEvent(messageEvent).handle(commandText);
 		}
 		return execute(args);
 	}
 	public void say(Message message) {
-		channel.sendMessage(message).complete();
+		getChannel().sendMessage(message).complete();
 	}
 	protected void setReady() {
 		isReady = true;
@@ -363,20 +378,11 @@ public abstract class Command{
 	}
 	protected CommandData makeSlashCommand() {
 		isSlashCommand = true;
-		String description = getHelpMessage();
-		if(description.length() > 100)
-			description = description.substring(0, description.indexOf("\n"));
-		slashCommandData = new CommandData(commandName.toLowerCase(), description);
+		slashCommandData.setDescription(getDescription());
 		return slashCommandData;
 	}
-	public CommandData getCommandData() {
-		CommandData cd = new CommandData(slashCommandData.getName(), slashCommandData.getDescription());
-		if(slashCommandData.getOptions().size() == 0)
-			cd.addSubcommandGroups(slashCommandData.getSubcommandGroups())
-			.addSubcommands(slashCommandData.getSubcommands());
-		else
-			cd.addOptions(slashCommandData.getOptions());
-		return cd;
+	public CommandData getCommandData() {	
+		return slashCommandData;
 			
 	}
 	public boolean handle(SlashCommandEvent event) {
@@ -393,6 +399,13 @@ public abstract class Command{
 		return this;
 	}
 	
+	protected final String getDescription() {
+		String description = getHelpMessage();
+		if(description.length() > 100)
+			description = description.substring(0, description.indexOf("\n"));
+		return description;
+	}
+	
 	protected Command addOption(String type, String name, String description, boolean required) {
 		slashCommandData.addOptions(new Option(type, name, description, required));
 		return this;
@@ -407,6 +420,63 @@ public abstract class Command{
 	protected abstract boolean execute(String[] args);
 	protected void reply(SlashCommandEvent event) {
 		scEvent.reply("");
+	}
+	protected File saveImage(String url, String fileName) {
+		return OnlineAction.saveImage(url, fileName);
+	}
+	
+	protected Member getTargetMember() {
+		return taggedMember != null ? taggedMember : member; 
+	}
+	
+	protected void generateSlashCommandData() {
+		slashCommandData = new CommandData(commandName, getDescription());
+		
+	}
+	protected void addToSlashCommandData(SubcommandData subcommand) {
+		slashCommandData.addSubcommands(subcommand);
+	}
+	protected void addToSlashCommandData(SubcommandGroupData subcommandGroup) {
+		slashCommandData.addSubcommandGroups(subcommandGroup);
+	}
+	protected void addToSlashCommandData(OptionData optionData) {
+		slashCommandData.addOptions(optionData);
+	}
+	protected OrganizationCommand addSubCommandGroup(String name) {
+		return new OrganizationCommand(this, name);
+	}
+	protected OrganizationCommand getter() {
+		return get != null ? get : (get = addSubCommandGroup("get"));
+	}
+	protected OrganizationCommand setter() {
+		return set != null ? set : (set = addSubCommandGroup("set"));
+	}
+	protected TextChannel getChannel() {
+		return channel;
+	}
+	protected TextChannel setChannel(TextChannel newChannel) {
+		return channel = newChannel;
+	}
+	protected TextChannel resetChannel() {
+		return channel = messageEvent != null ? messageEvent.getChannel() : scEvent.getTextChannel();
+	}
+	protected Member getMember() {
+		return member;
+	}
+	protected Member setMember(Member newMember) {
+		return member = newMember;
+	}
+	protected Member resetMember() {
+		return member = messageEvent != null ? messageEvent.getMember() : scEvent.getMember();
+	}
+	protected Guild getGuild() {
+		return guild;
+	}
+	protected Guild setGuild(Guild guild) {
+		return this.guild = guild;
+	}
+	protected Guild resetGuild() {
+		return this.guild = messageEvent != null ? messageEvent.getGuild() : scEvent.getGuild();
 	}
 }
 
