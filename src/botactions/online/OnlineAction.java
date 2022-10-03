@@ -1,5 +1,6 @@
 package botactions.online;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
@@ -70,5 +71,12 @@ public final class OnlineAction extends BotAction {
 	 */
 	public static File saveImage(String url, String fileName) {
 		return connector.saveImage(url, fileName);
+	}
+	public static String skipLinesTo(String lineStartSearchTerm) throws IOException {
+		String data;
+		do {
+			data = getNextLine();
+		}while(!(data.startsWith(lineStartSearchTerm) || data.trim().startsWith(lineStartSearchTerm)));
+		return data;
 	}
 }

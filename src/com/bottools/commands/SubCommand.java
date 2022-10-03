@@ -130,5 +130,9 @@ public abstract class SubCommand extends Command {
 		}
 		return this;
 	}
+	@Override
+	protected void reply(String message) {
+		getParentCommand().reply(message);
+	}
 }
 

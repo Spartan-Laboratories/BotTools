@@ -75,6 +75,7 @@ public abstract class Command{
 	protected int terminalArg;
 	protected EmbedBuilder eb;
 	protected String[] args;
+	protected ReplyAction reply;
 	private Member taggedMember;
 	private String paramNames, aliases;
 	private String commandName;
@@ -157,7 +158,7 @@ public abstract class Command{
 		if(hasName)
 			return false;
 		hasName = true;
-		aliasList.add(this.commandName = commandName.toLowerCase().replaceAll(" ", ""));
+		aliasList.add(this.commandName = commandName.toLowerCase().replaceAll(" ", "").replaceAll("/", ""));
 		return true;
 	}
 	/**
@@ -342,15 +343,27 @@ public abstract class Command{
 			Botmain.out(debugMessage); 
 	}
 	protected void quickEmbed(String title, String description) {
-		eb.clear(); 
-		eb.setAuthor(title).setDescription(description);
+		eb.setAuthor(title);
+		if(description.length() > 2048)
+			description = description.substring(0,2048);
+		eb.setDescription(description);
 	}
 	protected MessageEmbed getEmbed() {
 		return eb.build(); 
 	}
 	protected void sendEmbed() {
-		getChannel().sendMessage(new MessageBuilder(eb.build()).build()).queue();
+		sendEmbed(channel);
 		resetEmbedBuilder();
+	}
+	private void sendEmbed(TextChannel channel) {
+		channel.sendMessage(getEmbed()).complete();
+	}
+	protected void sendEmbed(Collection<? extends TextChannel> channelList) {
+		channelList.forEach(channel->{
+			sendEmbed(channel);
+		});
+		resetEmbedBuilder();
+		
 	}
 	public boolean handle(CommandContainer commandText) {
 	//	System.out.println("Handling event with name: " + commandText.commandName + 
@@ -386,6 +399,7 @@ public abstract class Command{
 			
 	}
 	public boolean handle(SlashCommandEvent event) {
+		reply = event.deferReply();
 		setEvent(event);
 		return handle(Parser.parse(event));
 	}
@@ -418,8 +432,8 @@ public abstract class Command{
 	 * @throws Exception any error that may have thrown an exception while attempting to execute this command.
 	 */
 	protected abstract boolean execute(String[] args);
-	protected void reply(SlashCommandEvent event) {
-		scEvent.reply("");
+	protected void reply(String message) {
+		reply.setContent(message).complete();
 	}
 	protected File saveImage(String url, String fileName) {
 		return OnlineAction.saveImage(url, fileName);

@@ -1,6 +1,7 @@
 package com.bottools.commands;
 
 import com.bottools.main.Botmain;
+import com.bottools.services.ServiceCommand;
 
 import net.dv8tion.jda.api.entities.Member;
 
@@ -12,7 +13,7 @@ public abstract class GameStatsCommand extends OnlineCommand {
 		this.gameName = gameName;
 		isSubCommandRequired(true);
 
-		
+		createService();
 		makeSlashCommand();
 
 		new MethodCommand(this, "showstats", "Show the target player's stats", this::showStats);
@@ -38,7 +39,7 @@ public abstract class GameStatsCommand extends OnlineCommand {
 		}
 		protected boolean execute(String[] args) { 
 			Botmain.gdp.setGameID(getGuild(), getTargetMember(), gameName, args[0]);
-			say("The " + gameName + " ID of " + getTargetMember().getEffectiveName() + " has been set to " + getUserID());
+			reply("The " + gameName + " ID of " + getTargetMember().getEffectiveName() + " has been set to " + getUserID());
 			return true;
 		}
 	}
@@ -51,7 +52,7 @@ public abstract class GameStatsCommand extends OnlineCommand {
 		protected boolean execute(String[] args) {
 			String id = getUserID();
 			if(id == null) 	sendNoIDMessage();
-			else 			say("The in-game ID of " + getTargetMember().getUser().getName() + " is " + id);
+			else 			reply("The in-game ID of " + getTargetMember().getUser().getName() + " is " + id);
 			return true;
 		}
 	}
@@ -67,7 +68,7 @@ public abstract class GameStatsCommand extends OnlineCommand {
 		return Botmain.gdp.getID(getGuild(), member, gameName);
 	}
 	protected void sendNoIDMessage() {
-		say("This person's " + gameName + " ID has not been set. Use:\n"
+		reply("This person's " + gameName + " ID has not been set. Use:\n"
 				+ "`/" + GameStatsCommand.this.getName() + " setid *in-game id* @forthisperson` to set someone's ID");
 	}
 	protected boolean execute(String[] args) { 
@@ -76,13 +77,8 @@ public abstract class GameStatsCommand extends OnlineCommand {
 	}
 	protected abstract boolean showStats(String[] args);
 	protected abstract boolean lastGame(String[] args);
-
-	@Override
-	protected boolean connect(String URL) {
-		if(getUserID() == null) {
-			sendNoIDMessage();
-			return false;
-		}
-		return super.connect(URL);
+	protected abstract Void postPatchNotes(String value);
+	private void createService() {
+		ServiceCommand.createService("game services/" + gameName, this::postPatchNotes, 3600);
 	}
 }

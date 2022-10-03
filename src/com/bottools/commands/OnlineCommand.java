@@ -47,9 +47,7 @@ public abstract class OnlineCommand extends Command{
 			getData();
 	}
 	protected void skipLinesTo(String lineStartSearchTerm) throws IOException{
-		do {
-			getData();
-		}while(!(data.startsWith(lineStartSearchTerm) || data.trim().startsWith(lineStartSearchTerm)));
+		data = OnlineAction.skipLinesTo(lineStartSearchTerm);
 	}
 	protected final void skipToContains(String partOfData) throws IOException{
 		do {

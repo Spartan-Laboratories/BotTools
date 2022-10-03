@@ -635,4 +635,14 @@ public class GuildDataParser {
 		
 		//updateServerDatabase(guild);
 	}
+	public void modBotDataValue(String name, String value) {
+		reader.setDocument("BotData.xml");
+		Node node = reader.getChild(reader.getRoot(), name);
+		reader.setValue(node, value);
+	}
+	public String getBotDataValue(String name) {
+		reader.setDocument("BotData.xml");
+		Node node = reader.getChild(reader.getRoot(), name);
+		return reader.getValue(node);
+	}
 }
