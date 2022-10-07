@@ -20,6 +20,9 @@ import org.w3c.dom.Node;
 import com.bottools.commands.Command;
 import com.bottools.main.Parser.CommandContainer;
 
+import com.sedmelluq.lava.common.*;
+import com.sedmelluq.lava.*;
+
 import botactions.BotAction;
 import dataprocessing.GuildDataParser;
 import dataprocessing.XMLReader;
@@ -63,6 +66,7 @@ public abstract class Botmain implements Runnable{
 		listCommands();				//Old school commands setup
 		listSlashCommands();		//Fancy new "slash" commands setup
 		createAllSlashCommands();
+		musicSetup();
 		// My Systems again
 		gdp.updateServerDatabase();	//Must be after bot and console initialization
 		reader.setDocument("BotData.xml");
@@ -212,5 +216,9 @@ public abstract class Botmain implements Runnable{
 	}
 	public static HashMap<String, Command> getCommands() {
 		return commands;
+	}
+	private void musicSetup() {
+		AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
+		AudioSourceManagers.registerRemoteSources(playerManager);
 	}
 }
