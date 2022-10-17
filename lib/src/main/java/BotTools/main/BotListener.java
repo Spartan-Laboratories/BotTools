@@ -1,6 +1,9 @@
 package BotTools.main;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.function.Consumer;
 
 import BotTools.botactions.BotAction;
 import BotTools.commands.slashcommands.SlashCommand;
@@ -28,10 +31,16 @@ public class BotListener extends ListenerAdapter {
 	protected MessageChannel channel;
 	
 	private ArrayList<MessageChannel> ignoredChannels = new ArrayList<MessageChannel>();
+	private HashMap<EventType, List<Consumer<Event>>> actionMap = new HashMap<EventType, List<Consumer<Event>>>();
+	
+	public enum EventType{
+		MESSAGERECEIVED,;
+	}
 	
 	public BotListener() {
-		System.out.println("listener created");
 		addTrigger("/");
+		addTrigger("T.");
+		addOnMessageReceiveAction(this::defaultOnMessageReceivedAction);
 	}
 	@Override
 	public void onGuildJoin(GuildJoinEvent event){
@@ -63,9 +72,13 @@ public class BotListener extends ListenerAdapter {
 	 */
 	@Override
 	public synchronized void onMessageReceived(MessageReceivedEvent event) {
-		messageEvent = event;
-		message = event.getMessage().getContentRaw();
-		channel = event.getChannel();
+		actionMap.get(EventType.MESSAGERECEIVED).forEach(eventAction -> eventAction.accept(event));
+	}
+	private void defaultOnMessageReceivedAction(Event event) {
+		MessageReceivedEvent messageReceivedEvent = (MessageReceivedEvent) event;
+		messageEvent = messageReceivedEvent;
+		message = messageReceivedEvent.getMessage().getContentRaw();
+		channel = messageReceivedEvent.getChannel();
 		boolean isCommand = Parser.startsWithTrigger(message);
 		if(!isCommand) {
 			processSystemInteractions();
@@ -73,8 +86,11 @@ public class BotListener extends ListenerAdapter {
 			else;
 		}
 		// If the message does start with a trigger then parse the message as a command and execute it.
-		else if(!ignoredChannels.contains(event.getChannel()))
-			Botmain.handleCommand(Parser.parse(message), event);
+		else if(!ignoredChannels.contains(messageReceivedEvent.getChannel()))
+			Botmain.handleCommand(Parser.parse(message), messageReceivedEvent);
+	}
+	public void addOnMessageReceiveAction(Consumer<Event> onEventAction) {
+		actionMap.get(EventType.MESSAGERECEIVED).add(onEventAction);
 	}
 	
 	private void processSystemInteractions() {
