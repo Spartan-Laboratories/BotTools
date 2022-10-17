@@ -1,14 +1,11 @@
 package BotTools.services;
 
-import java.io.IOException;
-import java.util.function.Function;
-
-import BotTools.commands.OnlineCommand;
+import java.util.function.Consumer;
 import BotTools.main.Botmain;
 
 public class ServiceCommand extends CheckValueService{
 	
-	public static void createService(String serviceName, Function<String, Void> onChange, int interval) {
+	public static void createService(String serviceName, Consumer<String> onChange, int interval) {
 		createService(new ServiceCommand(serviceName), onChange, interval);
 	}
 	

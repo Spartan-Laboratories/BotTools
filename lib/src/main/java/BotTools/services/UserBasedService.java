@@ -1,7 +1,6 @@
 package BotTools.services;
 
-import java.util.function.Function;
-
+import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +13,7 @@ public class UserBasedService extends CheckValueService{
 	private static final Logger log = LoggerFactory.getLogger(UserBasedService.class);
 	String serviceName;
 	
-	public static void createService(String serviceName, Function<String, Void> onChange, int interval) {
+	public static void createService(String serviceName, Consumer<String> onChange, int interval) {
 		createService(new UserBasedService(serviceName), onChange, interval);
 	}
 	

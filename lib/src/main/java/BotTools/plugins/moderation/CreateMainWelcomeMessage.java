@@ -25,7 +25,7 @@ public class CreateMainWelcomeMessage extends Command {
 	}
 	
 	public boolean executeInChannel(TextChannel channel) {
-		setChannel(channel);
+		setChannel(channel); 
 		setGuild(channel.getGuild());
 		return execute(new String[0]);
 	}
@@ -34,7 +34,7 @@ public class CreateMainWelcomeMessage extends Command {
 		AddReactionRole.getEmoteList(welcomeMessage.getGuild()).forEach(emote -> {
 			welcomeMessage.addReaction(emote).complete();
 		});
-		return true;
+		return true; 
 	}
 	static void updateMessages(Guild guild, Emoji emote) {
 		List<Message> welcomeMessages = getGuildWelcomeMessages(guild);

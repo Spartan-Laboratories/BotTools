@@ -101,7 +101,7 @@ public abstract class Command{
 	protected final ArrayList<String> aliasList = new ArrayList<String>();
 	protected ReplyCallbackAction deferredReply;
 	private SlashCommandInteractionEvent scEvent;
-	private OrganizationCommand get, set;
+	private OrganizationCommand get, set, enable, disable;
 	/**
 	 * The only constructor in the class. It is required that this constructor is called from the constructors of subclasses.
 	 * Otherwise various help message and error report bugs will occur.
@@ -464,6 +464,12 @@ public abstract class Command{
 	protected OrganizationCommand setter() {
 		return set != null ? set : (set = addSubCommandGroup("set"));
 	}
+	protected OrganizationCommand enable() {
+		return enable != null ? enable : (enable = addSubCommandGroup("enable"));
+	}
+	protected OrganizationCommand disable() {
+		return disable != null ? disable : (disable = addSubCommandGroup("disable"));
+	}
 	protected MessageChannel getChannel() {
 		return channel;
 	}
@@ -494,6 +500,12 @@ public abstract class Command{
 	}
 	protected Message tts(String message) {
 		return BotAction.tts(getChannel(), message);
+	}
+	protected void replyWithEmbed() {
+		reply.addEmbeds(eb.build()).complete();
+	}
+	protected List<Member> mentions(){
+		return messageEvent.getMessage().getMentions().getMembers();
 	}
 }
 

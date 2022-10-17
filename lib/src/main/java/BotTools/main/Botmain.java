@@ -22,6 +22,7 @@ import BotTools.commands.HelpCommand;
 import BotTools.dataprocessing.GuildDataParser;
 import BotTools.dataprocessing.XMLReader;
 import BotTools.main.Parser.CommandContainer;
+import BotTools.plugins.Plugin;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
 import net.dv8tion.jda.api.JDA;
@@ -96,7 +97,7 @@ public abstract class Botmain implements Runnable{
 			.enableCache(CacheFlag.ONLINE_STATUS)
 			.enableCache(CacheFlag.FORUM_TAGS)
 			.setMemberCachePolicy(MemberCachePolicy.ALL)
-			.build() ;
+			.build();
 			
 			//jda.getPresence().setGame(Game.of(Game.GameType.DEFAULT, "/help for info"));
 		} catch (IllegalArgumentException e) {
@@ -222,5 +223,8 @@ public abstract class Botmain implements Runnable{
 	}
 	protected GuildDataParser createGuildDataParser() {
 		return new GuildDataParser();
+	}
+	protected final void addPlugin(Plugin plugin) {
+		plugin.get().forEach(Botmain::createCommand);
 	}
 }

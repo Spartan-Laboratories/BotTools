@@ -29,6 +29,5 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-16/"/>
 	<classpathentry kind="con" path="org.eclipse.buildship.core.gradleclasspathcontainer"/>
 	<classpathentry kind="src" path="/Support"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/lavaplayer"/>
 	<classpathentry kind="output" path="bin/default"/>
 </classpath>

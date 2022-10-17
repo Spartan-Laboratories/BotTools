@@ -1,14 +1,13 @@
 package BotTools.services;
 
-import java.util.function.Function;
-
+import java.util.function.Consumer;
 import BotTools.main.Botmain;
 import net.dv8tion.jda.api.entities.Guild;
 
 public class UserGameService extends UserBasedService {
 	String gameName;
 	
-	public static void createService(String gameName, Function<String, Void> onChange, int interval) {
+	public static void createService(String gameName, Consumer<String> onChange, int interval) {
 		createService(new UserGameService(gameName), onChange, interval);
 	}
 	

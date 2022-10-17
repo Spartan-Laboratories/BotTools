@@ -48,7 +48,7 @@ public class GuildDataParser {
 		//for(Guild g: Botmain.jda.getGuilds())Trimmer.trim("C:\\Users\\spart\\OneDrive\\Documents\\Programming\\workspace\\TrumpBotTest\\guildData\\" + g.getName() + "\\MemberData.xml");
 		
 		for(Guild g: Botmain.jda.getGuilds())
-			updateServerDatabase(g);
+			;//updateServerDatabase(g);
 		Botmain.out("Finished updating server member database");
 	}
 	

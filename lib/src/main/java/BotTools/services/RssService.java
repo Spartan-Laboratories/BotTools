@@ -2,8 +2,7 @@ package BotTools.services;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.function.Function;
-
+import java.util.function.Consumer;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.FeedException;
 import com.rometools.rome.io.SyndFeedInput;
@@ -13,7 +12,7 @@ public class RssService extends CheckValueService{
 
 	SyndFeed feed;
 	
-	public static void createService(String serviceName, Function<String, Void> onChange, int interval) {
+	public static void createService(String serviceName, Consumer<String> onChange, int interval) {
 		createService(new RssService(serviceName), onChange, interval);
 	}
 	

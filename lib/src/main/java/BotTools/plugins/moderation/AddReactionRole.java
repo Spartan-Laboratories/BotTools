@@ -24,7 +24,7 @@ public class AddReactionRole extends Command {
 		Emoji emote = getEmote(args[0]);
 		Role role = getRole(args[1]);
 		if(emote == null || role == null)
-			return false;
+			return false; 
 		makeReactionRole(guild, emote, role);
 		reply("Emote " + args[0] + " is now tied to the role: " + role.getAsMention());
 		CreateMainWelcomeMessage.updateMessages(guild, emote);
@@ -35,7 +35,7 @@ public class AddReactionRole extends Command {
 		List<RichCustomEmoji> emojis = guild.getEmojis();
 		Emoji emote = guild.getEmojisByName(args[0].split(":")[1], true).get(0);
 		return emote != null ? emote : invalidEmoteMessage();
-	}
+	} 
 	private Emoji invalidEmoteMessage() {
 		say("Emote was not found. First option must be an emote that is found in this server.");
 		return null;

@@ -73,14 +73,15 @@ public abstract class SubCommand extends Command {
 		generateSlashSubcommandData(parent, getName());
 	}
 	
-	private void generateSlashSubcommandData(Command command, String name) {
-		nestLevel = getNestLevel(command);
+	private void generateSlashSubcommandData(Command parent, String name) {
+		nestLevel = getNestLevel(parent);
+		name = name.toLowerCase();
 		if(nestLevel == 1)
-			command.addToSlashCommandData(subcommandGroupData = new SubcommandGroupData(name, getDescription()));
+			parent.addToSlashCommandData(subcommandGroupData = new SubcommandGroupData(name, getDescription()));
 		else if(nestLevel == 2)
-			command.addToSlashCommandData(subcommandData = new SubcommandData(name, getDescription()));
+			parent.addToSlashCommandData(subcommandData = new SubcommandData(name, getDescription()));
 		else if(nestLevel > 2)
-			command.addToSlashCommandData(getOptionData(name));
+			parent.addToSlashCommandData(getOptionData(name));
 		else assert false;
 		
 	}

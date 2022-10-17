@@ -26,6 +26,11 @@ import org.xml.sax.SAXException;
 
 import BotTools.main.Botmain;
 
+/**
+ * A wrapper around an existing XML reading library
+ * @author Spartak
+ *
+ */
 public class XMLReader {
 	private DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 	private DocumentBuilder db;

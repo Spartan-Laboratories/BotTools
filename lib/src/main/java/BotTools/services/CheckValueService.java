@@ -1,14 +1,13 @@
 package BotTools.services;
 
 import java.io.IOException;
-import java.util.function.Function;
-
+import java.util.function.Consumer;
 import BotTools.commands.OnlineCommand;
 import BotTools.main.Botmain;
 
 public abstract class CheckValueService extends OnlineCommand implements Runnable{
 	private int interval;
-	private Function<String, Void> onChange;
+	private Consumer<String> onChange;
 	protected ServicePacketReader packet;
 	private String packetName;
 	CheckValueService(String serviceName) {
@@ -23,7 +22,7 @@ public abstract class CheckValueService extends OnlineCommand implements Runnabl
 	}
 	
 	private void triggerResponce(String newValue) {
-		onChange.apply(newValue);
+		onChange.accept(newValue);
 	}
 
 	private void sleep() {
@@ -55,10 +54,10 @@ public abstract class CheckValueService extends OnlineCommand implements Runnabl
 	}
 	protected abstract void loop();
 	
-	protected static void createService(CheckValueService service, Function<String, Void> onChange, int interval){
+	protected static void createService(CheckValueService service, Consumer<String> onChange, int interval){
 		service.setTriggerResponce(onChange).setInterval(interval).start();
 	}
-	private CheckValueService setTriggerResponce(Function<String, Void> onChange) {
+	private CheckValueService setTriggerResponce(Consumer<String> onChange) {
 		this.onChange = onChange;
 		return this;
 	}
