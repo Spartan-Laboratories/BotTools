@@ -1,6 +1,7 @@
 package BotTools.commands;
 
 import java.io.File;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -25,6 +26,8 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -168,6 +171,7 @@ public abstract class Command{
 	 * @param message - the message that is to be written in the text channel
 	 */
 	protected Message say(String message) {
+		message = message.length() < 2000 ? message : message.substring(0,1999);
 		return BotAction.say(getChannel(), message);
 	}
 	protected void show(String url) {
@@ -350,15 +354,12 @@ public abstract class Command{
 			description = description.substring(0,2048);
 		eb.setDescription(description);
 	}
-	protected MessageEmbed getEmbed() {
-		return eb.build(); 
-	}
 	protected void sendEmbed() {
 		sendEmbed(channel);
 		resetEmbedBuilder();
 	}
 	private void sendEmbed(MessageChannel channel) {
-		channel.sendMessageEmbeds(getEmbed()).complete();
+		channel.sendMessageEmbeds(getFinalEmbed()).complete();
 	}
 	protected void sendEmbed(Collection<? extends MessageChannel> channelList) {
 		channelList.forEach(this::sendEmbed);
@@ -398,7 +399,7 @@ public abstract class Command{
 			
 	}
 	public boolean handle(SlashCommandInteractionEvent event) {
-		reply = event.deferReply();
+		reply = event.deferReply();		
 		setEvent(event);
 		return handle(Parser.parse(event));
 	}
@@ -439,6 +440,11 @@ public abstract class Command{
 	}
 	
 	protected Member getTargetMember() {
+		if(scEvent != null) {
+			List<OptionMapping> tags = scEvent.getOptionsByType(OptionType.USER);
+			if(tags.size() > 0)
+				taggedMember = tags.get(0).getAsMember();
+		}
 		return taggedMember != null ? taggedMember : member; 
 	}
 	
@@ -502,10 +508,16 @@ public abstract class Command{
 		return BotAction.tts(getChannel(), message);
 	}
 	protected void replyWithEmbed() {
-		reply.addEmbeds(eb.build()).complete();
+		reply.addEmbeds(getFinalEmbed()).complete();
 	}
 	protected List<Member> mentions(){
 		return messageEvent.getMessage().getMentions().getMembers();
+	}
+	private MessageEmbed getFinalEmbed() {
+		return eb.setFooter(Botmain.jda.getSelfUser().getName()).setTimestamp(Instant.now()).build();
+	}
+	protected OptionMapping getOption(String optionName) {
+		return scEvent.getOption(optionName);
 	}
 }
 

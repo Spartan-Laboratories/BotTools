@@ -7,6 +7,7 @@ import BotTools.main.Parser.CommandContainer;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
@@ -113,6 +114,10 @@ public abstract class SubCommand extends Command {
 	@Override 
 	protected Guild getGuild() {
 		return getParentCommand().getGuild();
+	}
+	@Override
+	protected OptionMapping getOption(String optionName) {
+		return getParent().getOption(optionName);
 	}
 	@Override
 	protected Command addOption(String type, String name, String description, boolean required) {

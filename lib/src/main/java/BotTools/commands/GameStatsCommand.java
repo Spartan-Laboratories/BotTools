@@ -7,15 +7,17 @@ import net.dv8tion.jda.api.entities.Member;
 public abstract class GameStatsCommand extends OnlineCommand {
 	protected String gameName;
 	protected OrganizationCommand show, id;
+	protected String tagSymbol;
 	protected GameStatsCommand(String gameName) {
 		super(gameName);
 		this.gameName = gameName;
+		tagSymbol = "#";
 		isSubCommandRequired(true);
 
-		createService();
 		makeSlashCommand();
 
-		new MethodCommand(this, "showstats", "Show the target player's stats", this::showStats);
+		new MethodCommand(this, "showstats", "Show the target player's stats", this::showStats)
+		.addOption("user", "name", "the server member whose game you want to see", false);;
 		new MethodCommand(this, "lastgame", "Show the stats from the last game that was played", this::lastGame)
 		.addOption("user", "name", "the server member whose game you want to see", false);
 		new SCSetID();
@@ -27,24 +29,45 @@ public abstract class GameStatsCommand extends OnlineCommand {
 		show= new OrganizationCommand(this, "show").addCommand("id", "getid").addCommand("stats", "showstats");
 		new OrganizationCommand(this, "last").addCommand("game", "lastgame");
 	}
-	protected class SCSetID extends SubCommand{
+	protected abstract class GameStatsSubCommand extends SubCommand{
+
+		protected GameStatsSubCommand(String name) {
+			super(GameStatsCommand.this, name);
+			init();
+			addOptionals();
+		}
+		protected void init() {};
+		private void addOptionals() {
+			addOption("user", "person", "the person whose game id you want to set", false);
+		}
+	}
+	protected class SCSetID extends GameStatsSubCommand{
 		protected SCSetID() {
-			super(GameStatsCommand.this, "setid");
+			super("setid");
 			setHelpMessage("sets the game id of the mentioned user\n"
 			+ "For example:\n"
 			+ "`/" + GameStatsCommand.this.getName() + " setid *in-game id* @forthisperson` to set the ID for the mentioned user. Or\n"
 			+ "`/" + GameStatsCommand.this.getName() + " setid *in-game id*` to set the ID for yourself");
+		}
+		@Override
+		protected void init() {
 			addOption("string", "id", "the steam/dotabuff id", true);
+			addOption("string", "tagline", "the tag number associated with this id", false);
 		}
 		protected boolean execute(String[] args) { 
-			Botmain.gdp.setGameID(getGuild(), getTargetMember(), gameName, args[0]);
+			Member targetMember = getTargetMember();
+			String tagline = getOption("tagline").getAsString();
+			if(Character.isDigit(tagline.charAt(0)))//if the first character of the tagline is numeric
+				tagline = tagSymbol + tagline;
+			String fullTag = args[0] + tagline;
+			Botmain.gdp.setGameID(getGuild(), targetMember, gameName, fullTag);
 			reply("The " + gameName + " ID of " + getTargetMember().getEffectiveName() + " has been set to " + getUserID());
 			return true;
 		}
 	}
-	private final class SCGetID extends SubCommand{
+	private final class SCGetID extends GameStatsSubCommand{
 		private SCGetID() {
-			super(GameStatsCommand.this, "getid");
+			super("getid");
 			addAlias("showid");
 			setHelpMessage("Shows the recorded game ID for the mentioned user or for yourself if no user is mentioned");
 		}
@@ -77,7 +100,7 @@ public abstract class GameStatsCommand extends OnlineCommand {
 	protected abstract boolean showStats(String[] args);
 	protected abstract boolean lastGame(String[] args);
 	protected abstract Void postPatchNotes(String value);
-	private void createService() {
+	private void startPatchNotesService() {
 		ServiceCommand.createService("game services/" + gameName, this::postPatchNotes, 3600);
 	}
 }
