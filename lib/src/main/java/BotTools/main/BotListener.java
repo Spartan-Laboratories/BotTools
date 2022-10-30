@@ -34,12 +34,16 @@ public class BotListener extends ListenerAdapter {
 	private HashMap<EventType, List<Consumer<Event>>> actionMap = new HashMap<EventType, List<Consumer<Event>>>();
 	
 	public enum EventType{
-		MESSAGERECEIVED,;
+		MESSAGERECEIVED,MESSAGEREACTIONADD,GUILDJOIN, GUILDUPDATENAME, GUILDMEMBERJOIN, SLASHCOMMANDINTERACTION;
 	}
 	
 	public BotListener() {
 		addTrigger("/");
 		addTrigger("T.");
+		
+		for(EventType et: EventType.values())
+			actionMap.put(et, new ArrayList<Consumer<Event>>());
+		
 		addOnMessageReceiveAction(this::defaultOnMessageReceivedAction);
 	}
 	@Override
@@ -65,6 +69,11 @@ public class BotListener extends ListenerAdapter {
 	
 	@Override
 	public void onMessageReactionAdd(MessageReactionAddEvent event) {
+		actionMap.get(EventType.MESSAGEREACTIONADD).forEach(eventAction -> eventAction.accept(event));
+	}
+	private void defaultOnMessageReactionAddAction() {}
+	public void addOnMessageReactionAddAction(Consumer<Event> onEventAction) {
+		actionMap.get(EventType.MESSAGEREACTIONADD).add(onEventAction);
 	}
 	/**
 	 * What happens when a User types in any message
