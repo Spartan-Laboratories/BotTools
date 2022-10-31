@@ -10,7 +10,9 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.update.GuildUpdateNameEvent;
+import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.command.UserContextInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
@@ -49,15 +51,16 @@ public final class BotListener extends ListenerAdapter {
 	BotListener() {
 		addTrigger("/");
 		
-		responder.addOnGuildJoinAction(				this::defaultOnGuildJoinAction);
+		responder.addOnGuildJoinAction(					this::defaultOnGuildJoinAction);
 		responder.addOnGuildUpdateNameAction(			this::defaultOnGuildUpdateNameAction);
 		responder.addOnGuildMemberJoinAction(			this::defaultOnGuildMemberJoinAction);
 		responder.addOnMessageReceivedAction(			this::defaultOnMessageReceivedAction);
 		responder.addOnSlashCommandInteractionAction(	Botmain::handleCommand);
+		responder.addOnUserContextInteractionAction(	Botmain::handleCommand);
+		responder.addOnMessageContextInteractionAction( Botmain::handleCommand);
 	}
-	@Override
-	public void onGuildJoin(GuildJoinEvent event){
-		responder.actOn(event);
+	public void addTrigger(String trigger) {
+		Parser.addTrigger(trigger);
 	}
 	private void defaultOnGuildJoinAction(GuildJoinEvent event) {
 		Guild joinedServer = event.getGuild();
@@ -73,47 +76,22 @@ public final class BotListener extends ListenerAdapter {
 		log.info("Successfully joined the server: {}", serverName);
 	}
 	
-	@Override
-	public void onGuildUpdateName(GuildUpdateNameEvent event) {
-		responder.actOn(event);
+	private void defaultOnGuildMemberJoinAction(GuildMemberJoinEvent event) {
+		log.info("The user " + event.getUser().getName() + " has joined the guild " + event.getGuild().getName());
+		
+		// Updates the database of every guild, therefore not requiring a Guild argument
+		Botmain.gdp.updateServerDatabase();			
+		log.info("Guild member database has been updated");
+		
+		// Gives the new guild member the specified default role
+		log.info("adding the default role to the member");
+		event.getGuild().addRoleToMember(event.getMember(), Botmain.gdp.getDefaultRole(event.getGuild())).complete();
 	}
 	private void defaultOnGuildUpdateNameAction(GuildUpdateNameEvent event) {
 		new File("guildData/" + event.getOldName()).renameTo(
 		new File("guildData/" + event.getGuild().getName()));
 	}
 	
-	@Override
-	public void onGuildMemberJoin(GuildMemberJoinEvent event){
-		responder.actOn(event);
-	}
-	private void defaultOnGuildMemberJoinAction(GuildMemberJoinEvent event) {
-		System.out.println("The user " + event.getUser().getName() + " has joined the guild " + event.getGuild().getName());
-		
-		// Updates the database of every guild, therefore not requiring a Guild argument
-		Botmain.gdp.updateServerDatabase();			
-		System.out.println("Guild member database has been updated");
-		
-		// Makes the bot send a welcome message to the user in the specified text channel
-		System.out.println("Sending welcome message");
-		Botmain.guildManager.sendWelcomeMessage(event.getMember());
-		
-		// Gives the new guild member the specified default role
-		System.out.println("adding the default role to the member");
-		event.getGuild().addRoleToMember(event.getMember(), Botmain.gdp.getDefaultRole(event.getGuild())).complete();
-	}
-	@Override
-	public void onMessageReactionAdd(MessageReactionAddEvent event) {
-		responder.actOn(event);
-	}
-	
-	/**
-	 * What happens when a User types in any message
-	 * 
-	 */
-	@Override
-	public void onMessageReceived(MessageReceivedEvent event) {
-		responder.actOn(event);
-	}
 	private void defaultOnMessageReceivedAction(MessageReceivedEvent event) {
 		String message = event.getMessage().getContentRaw();
 		boolean isCommand = Parser.startsWithTrigger(message);
@@ -123,27 +101,57 @@ public final class BotListener extends ListenerAdapter {
 			return;
 		Botmain.handleCommand(Parser.parse(message), event);
 	}
+	public void ignoreChannel(MessageChannel channel) {
+		ignoredChannels.add(channel);
+	}
 	@Override
-	public void onMessageDelete(MessageDeleteEvent event) {
+	public void onGuildJoin(GuildJoinEvent event){
 		responder.actOn(event);
 	}
 	
 	@Override
+	public void onGuildMemberJoin(GuildMemberJoinEvent event){
+		responder.actOn(event);
+	}
+	@Override
+	public void onGuildUpdateName(GuildUpdateNameEvent event) {
+		responder.actOn(event);
+	}
+	@Override
+	public void onMessageContextInteraction(MessageContextInteractionEvent event) {
+		responder.actOn(event);
+	}
+	
+	@Override
+	public void onMessageDelete(MessageDeleteEvent event) {
+		responder.actOn(event);
+	}
+	@Override
+	public void onMessageReactionAdd(MessageReactionAddEvent event) {
+		responder.actOn(event);
+	}
+	/**
+	 * What happens when a User types in any message
+	 * 
+	 */
+	@Override
+	public void onMessageReceived(MessageReceivedEvent event) {
+		responder.actOn(event);
+	}
+	@Override
 	public void onSlashCommandInteraction(SlashCommandInteractionEvent event){
+		responder.actOn(event);
+	}
+	@Override
+	public void onUserContextInteraction(UserContextInteractionEvent event) {
 		responder.actOn(event);
 	}
 	@Override
 	public void onUserUpdateOnlineStatus(UserUpdateOnlineStatusEvent event) {
 		responder.actOn(event);
 	}
-	public void ignoreChannel(MessageChannel channel) {
-		ignoredChannels.add(channel);
-	}
 	public void unignoreChannel(MessageChannel channel) {
 		ignoredChannels.remove(channel);
-	}
-	public void addTrigger(String trigger) {
-		Parser.addTrigger(trigger);
 	}
 
 	

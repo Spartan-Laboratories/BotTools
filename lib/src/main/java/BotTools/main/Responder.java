@@ -8,16 +8,20 @@ import java.util.Set;
 import BotTools.main.EventAction.GuildJoinAction;
 import BotTools.main.EventAction.GuildMemberJoinAction;
 import BotTools.main.EventAction.GuildUpdateNameAction;
+import BotTools.main.EventAction.MessageContextInteractionAction;
 import BotTools.main.EventAction.MessageDeleteAction;
 import BotTools.main.EventAction.MessageReactionAddAction;
 import BotTools.main.EventAction.MessageReceivedAction;
 import BotTools.main.EventAction.SlashCommandInteractionAction;
+import BotTools.main.EventAction.UserContextInteractionAction;
 import BotTools.main.EventAction.UserUpdateOnlineStatusAction;
 import net.dv8tion.jda.api.events.Event;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.update.GuildUpdateNameEvent;
+import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.command.UserContextInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
@@ -62,7 +66,12 @@ public class Responder {
 	public void addOnSlashCommandInteractionAction(SlashCommandInteractionAction onEventAction) {
 		actionMap.get(SlashCommandInteractionEvent.class).add(onEventAction);
 	}
-	
+	public void addOnUserContextInteractionAction(UserContextInteractionAction onEventAction) {
+		actionMap.get(UserContextInteractionEvent.class).add(onEventAction);
+	}
+	public void addOnMessageContextInteractionAction(MessageContextInteractionAction onEventAction) {
+		actionMap.get(MessageContextInteractionEvent.class).add(onEventAction);
+	}
 	private static List<Class> getSubclasses(Class superClass) {
 		ClassPathScanningCandidateComponentProvider provider = new ClassPathScanningCandidateComponentProvider(false);
 		provider.addIncludeFilter(new AssignableTypeFilter(superClass));

@@ -14,7 +14,7 @@ public abstract class GameStatsCommand extends OnlineCommand {
 		tagSymbol = "#";
 		isSubCommandRequired(true);
 
-		makeSlashCommand();
+		makeInteractible();
 
 		new MethodCommand(this, "showstats", "Show the target player's stats", this::showStats)
 		.addOption("user", "name", "the server member whose game you want to see", false);;

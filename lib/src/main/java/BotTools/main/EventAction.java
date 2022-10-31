@@ -4,7 +4,9 @@ import net.dv8tion.jda.api.events.Event;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.update.GuildUpdateNameEvent;
+import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.command.UserContextInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
@@ -21,4 +23,6 @@ public interface EventAction<EventType extends Event> {
 	public interface GuildUpdateNameAction extends EventAction<GuildUpdateNameEvent>{}
 	public interface GuildMemberJoinAction extends EventAction<GuildMemberJoinEvent>{}
 	public interface SlashCommandInteractionAction extends EventAction<SlashCommandInteractionEvent>{}
+	public interface UserContextInteractionAction extends EventAction<UserContextInteractionEvent>{}
+	public interface MessageContextInteractionAction extends EventAction<MessageContextInteractionEvent>{}
 }

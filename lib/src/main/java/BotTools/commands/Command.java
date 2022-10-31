@@ -23,8 +23,11 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.command.UserContextInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.interactions.Interaction;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -34,6 +37,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
+import net.dv8tion.jda.api.interactions.commands.context.UserContextInteraction;
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import net.dv8tion.jda.api.utils.data.DataObject;
 import net.dv8tion.jda.internal.utils.Checks;
@@ -86,7 +90,7 @@ public abstract class Command{
 	private String commandName;
 	private Map<String, SubCommand> subCommands = new HashMap<String, SubCommand>();
 	private boolean subCommandRequired;
-	private boolean isSlashCommand;
+	private boolean isInteractible;
 	private String noSubCommandDescription;
 	private final String scRequiredErrMsg = "This command has to be followed by a sub-command.";
 	private final String invalidSCErrMsg = " is not a valid sub-command.";
@@ -167,7 +171,7 @@ public abstract class Command{
 		return true;
 	}
 	/**
-	 * Outputs the given message in the text channel of the event set by {@link #setEvent(GuildMessageReceivedEvent)}
+	 * Outputs the given message in the text channel of the event set by {@link #pullInteractionData(GuildMessageReceivedEvent)}
 	 * @param message - the message that is to be written in the text channel
 	 */
 	protected Message say(String message) {
@@ -182,7 +186,7 @@ public abstract class Command{
 	}
 	
 	/**
-	 * Outputs the given message in the text channel of the event set by {@link #setEvent(GuildMessageReceivedEvent)}.
+	 * Outputs the given message in the text channel of the event set by {@link #pullInteractionData(GuildMessageReceivedEvent)}.
 	 * <br>Works the same way as {@link #say(String)} but with a delay in seconds set by secondsDelay.
 	 * @param secondsDelay - the delay in seconds after which the message is to be written.
 	 * @param message - the message that is to be written in the text channel.
@@ -387,29 +391,41 @@ public abstract class Command{
 	protected boolean isReady() {
 		return isReady;
 	}
-	public boolean isSlashCommand() {
-		return isSlashCommand;
+	public boolean isInteractible() {
+		return isInteractible;
 	}
-	protected SlashCommandData makeSlashCommand() {
-		isSlashCommand = true;
+	protected SlashCommandData makeInteractible() {
+		isInteractible = true;
 		return slashCommandData;
 	}
 	public CommandData getCommandData() {	
 		return slashCommandData;
 			
 	}
+	public boolean handle(Interaction interaction) {
+		pullInteractionData(interaction);
+		return handle(Parser.parse("/" + commandName));
+	}
+	public boolean handle(MessageContextInteractionEvent e) {
+		reply = e.deferReply();
+		return handle((Interaction)e);
+	}
+	
 	public boolean handle(SlashCommandInteractionEvent event) {
 		reply = event.deferReply();		
-		setEvent(event);
+		scEvent = event;
+		pullInteractionData(event);
 		return handle(Parser.parse(event));
 	}
 	
-	private Command setEvent(SlashCommandInteractionEvent event) {
-		scEvent = event;
+	private Command pullInteractionData(Interaction event) {
 		guild = event.getGuild();
 		member = event.getMember();
-		user = event.getUser();
 		channel = event.getMessageChannel();
+		user = UserContextInteractionEvent.class.isAssignableFrom(event.getClass()) ? 
+				((UserContextInteractionEvent)event).getTarget() : event.getUser();
+		if(MessageContextInteractionEvent.class.isAssignableFrom(event.getClass()))
+			message = ((MessageContextInteractionEvent)event).getTarget();
 		return this;
 	}
 	
@@ -426,7 +442,7 @@ public abstract class Command{
 	}
 	
 	/**
-	 * Executes this command using the arguments provided by args and the last event given by {@link #setEvent(GuildMessageReceivedEvent event)} .
+	 * Executes this command using the arguments provided by args and the last event given by {@link #pullInteractionData(GuildMessageReceivedEvent event)} .
 	 * @param args - the arguments that followed this command.
 	 * @return always returns <b> true</b>
 	 * @throws Exception any error that may have thrown an exception while attempting to execute this command.
@@ -504,6 +520,16 @@ public abstract class Command{
 	protected Guild resetGuild() {
 		return this.guild = messageEvent != null ? messageEvent.getGuild() : scEvent.getGuild();
 	}
+	protected Message getMessage() {
+		return message;
+	}
+	protected Message setMessage(Message message) {
+		return this.message = message;
+	}
+	protected Message resetMessage() {
+		return this.message = messageEvent.getMessage();
+	}
+	
 	protected Message tts(String message) {
 		return BotAction.tts(getChannel(), message);
 	}

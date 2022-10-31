@@ -681,6 +681,6 @@ public class GuildDataParser {
 				break;
 			}
 		}
-		reader.removeTag(welcomeMessages, deletedMessage);
+		reader.removePossibleTag(welcomeMessages, deletedMessage);
 	}
 }
