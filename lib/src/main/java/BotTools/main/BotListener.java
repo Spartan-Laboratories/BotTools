@@ -1,53 +1,65 @@
 package BotTools.main;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.function.Consumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import BotTools.botactions.BotAction;
-import BotTools.commands.slashcommands.SlashCommand;
-import net.dv8tion.jda.api.events.Event;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.commands.build.CommandData;
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message.Attachment;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
-import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.update.GuildUpdateNameEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
+import net.dv8tion.jda.api.events.user.update.UserUpdateOnlineStatusEvent;
 
-
-public class BotListener extends ListenerAdapter {
-	
-	protected String message;
-	protected MessageReceivedEvent messageEvent;
-	protected MessageChannel channel;
-	
+/**
+ * The BotListener class detects user actions that happen within
+ * the servers that this bot is a part of. Whenever any user within
+ * one of those servers performs any action this class fires off a 
+ * series of actions of its own. With no modification this class will
+ * only fire off the default bot actions associated with the user action.
+ * However, additional actions may be added in a bot's implementation of 
+ * this API.
+ * 
+ * 
+ * @author spartak
+ *
+ */
+public final class BotListener extends ListenerAdapter {
+	private static final Logger log = LoggerFactory.getLogger(BotListener.class);
+	/**
+	 * This is a list of MessageChannels that this listener is going to ignore.
+	 * By default it is empty but can be changed by plugins or bot implemented commands 
+	 * that reserve channels for specific commands
+	 */
 	private ArrayList<MessageChannel> ignoredChannels = new ArrayList<MessageChannel>();
-	private HashMap<EventType, List<Consumer<Event>>> actionMap = new HashMap<EventType, List<Consumer<Event>>>();
+	Responder responder = new Responder();
 	
-	public enum EventType{
-		MESSAGERECEIVED,MESSAGEREACTIONADD,GUILDJOIN, GUILDUPDATENAME, GUILDMEMBERJOIN, SLASHCOMMANDINTERACTION;
-	}
+	/**
+	 * The Event Types that this listener listens 
+	 * and fires off event actions for.
+	 * @author spartak
+	 *
+	 */
 	
-	public BotListener() {
+	BotListener() {
 		addTrigger("/");
-		addTrigger("T.");
 		
-		for(EventType et: EventType.values())
-			actionMap.put(et, new ArrayList<Consumer<Event>>());
-		
-		addOnMessageReceiveAction(this::defaultOnMessageReceivedAction);
+		responder.addOnGuildJoinAction(				this::defaultOnGuildJoinAction);
+		responder.addOnGuildUpdateNameAction(			this::defaultOnGuildUpdateNameAction);
+		responder.addOnGuildMemberJoinAction(			this::defaultOnGuildMemberJoinAction);
+		responder.addOnMessageReceivedAction(			this::defaultOnMessageReceivedAction);
+		responder.addOnSlashCommandInteractionAction(	Botmain::handleCommand);
 	}
 	@Override
 	public void onGuildJoin(GuildJoinEvent event){
+		responder.actOn(event);
+	}
+	private void defaultOnGuildJoinAction(GuildJoinEvent event) {
 		Guild joinedServer = event.getGuild();
 		String serverName = joinedServer.getName();
 		try {
@@ -58,62 +70,23 @@ public class BotListener extends ListenerAdapter {
 			e.printStackTrace();
 			return;
 		}
-		Botmain.out("Successfully joined the server: " + serverName);
+		log.info("Successfully joined the server: {}", serverName);
 	}
 	
 	@Override
 	public void onGuildUpdateName(GuildUpdateNameEvent event) {
+		responder.actOn(event);
+	}
+	private void defaultOnGuildUpdateNameAction(GuildUpdateNameEvent event) {
 		new File("guildData/" + event.getOldName()).renameTo(
 		new File("guildData/" + event.getGuild().getName()));
 	}
 	
 	@Override
-	public void onMessageReactionAdd(MessageReactionAddEvent event) {
-		actionMap.get(EventType.MESSAGEREACTIONADD).forEach(eventAction -> eventAction.accept(event));
-	}
-	private void defaultOnMessageReactionAddAction() {}
-	public void addOnMessageReactionAddAction(Consumer<Event> onEventAction) {
-		actionMap.get(EventType.MESSAGEREACTIONADD).add(onEventAction);
-	}
-	/**
-	 * What happens when a User types in any message
-	 * 
-	 */
-	@Override
-	public synchronized void onMessageReceived(MessageReceivedEvent event) {
-		actionMap.get(EventType.MESSAGERECEIVED).forEach(eventAction -> eventAction.accept(event));
-	}
-	private void defaultOnMessageReceivedAction(Event event) {
-		MessageReceivedEvent messageReceivedEvent = (MessageReceivedEvent) event;
-		messageEvent = messageReceivedEvent;
-		message = messageReceivedEvent.getMessage().getContentRaw();
-		channel = messageReceivedEvent.getChannel();
-		boolean isCommand = Parser.startsWithTrigger(message);
-		if(!isCommand) {
-			processSystemInteractions();
-			if(isSpam()) performSpamHandling();
-			else;
-		}
-		// If the message does start with a trigger then parse the message as a command and execute it.
-		else if(!ignoredChannels.contains(messageReceivedEvent.getChannel()))
-			Botmain.handleCommand(Parser.parse(message), messageReceivedEvent);
-	}
-	public void addOnMessageReceiveAction(Consumer<Event> onEventAction) {
-		actionMap.get(EventType.MESSAGERECEIVED).add(onEventAction);
-	}
-	
-	private void processSystemInteractions() {
-		/*
-		if(dc != null && !dc.isBroken())
-			dc.process(event);
-		if(event.getAuthor().isBot())
-			return;
-		tc.receiveAnswer(event.getChannel(), event.getMember(), message);
-		*/
-	}
-	
-	@Override
 	public void onGuildMemberJoin(GuildMemberJoinEvent event){
+		responder.actOn(event);
+	}
+	private void defaultOnGuildMemberJoinAction(GuildMemberJoinEvent event) {
 		System.out.println("The user " + event.getUser().getName() + " has joined the guild " + event.getGuild().getName());
 		
 		// Updates the database of every guild, therefore not requiring a Guild argument
@@ -128,72 +101,50 @@ public class BotListener extends ListenerAdapter {
 		System.out.println("adding the default role to the member");
 		event.getGuild().addRoleToMember(event.getMember(), Botmain.gdp.getDefaultRole(event.getGuild())).complete();
 	}
-	// TODO Figure out what changed about use online status updates
-	/*
 	@Override
-	public void onUserOnlineStatusUpdate(UserOnlineStatusUpdateEvent event) {
-		User user = event.getUser();
-		OnlineStatus status = event.getCurrentOnlineStatus();
-		((NotifyCommand)Botmain.commands.get("notify")).processStatusChange(user, status);
+	public void onMessageReactionAdd(MessageReactionAddEvent event) {
+		responder.actOn(event);
 	}
-	*/
+	
+	/**
+	 * What happens when a User types in any message
+	 * 
+	 */
 	@Override
-	public void onReady(ReadyEvent e){
-		System.out.println("Logged in");
+	public void onMessageReceived(MessageReceivedEvent event) {
+		responder.actOn(event);
 	}
-	private void performSpamHandling(MessageReceivedEvent event){
-		event.getChannel().sendMessage("you need to stop!").complete();
-		long oldTime = System.currentTimeMillis();
-		while(System.currentTimeMillis() < oldTime + 1000);
-		event.getChannel().sendMessage("/prune 3").complete();
-		Guild guild = event.getGuild();
-		Member member = event.getMember();
-		//guild.getController().setMute(member, true).complete();
+	private void defaultOnMessageReceivedAction(MessageReceivedEvent event) {
+		String message = event.getMessage().getContentRaw();
+		boolean isCommand = Parser.startsWithTrigger(message);
+		if(!isCommand)
+			return;
+		if(ignoredChannels.contains(event.getChannel()))
+			return;
+		Botmain.handleCommand(Parser.parse(message), event);
 	}
-	/*
-	void setDuplicateCommand(DuplicateCommand dc) {
-		this.dc = dc;
+	@Override
+	public void onMessageDelete(MessageDeleteEvent event) {
+		responder.actOn(event);
 	}
-	void setTriviaCommand(TriviaCommand tc) {
-		this.tc = tc;
-	}*/
+	
+	@Override
+	public void onSlashCommandInteraction(SlashCommandInteractionEvent event){
+		responder.actOn(event);
+	}
+	@Override
+	public void onUserUpdateOnlineStatus(UserUpdateOnlineStatusEvent event) {
+		responder.actOn(event);
+	}
 	public void ignoreChannel(MessageChannel channel) {
 		ignoredChannels.add(channel);
 	}
 	public void unignoreChannel(MessageChannel channel) {
 		ignoredChannels.remove(channel);
 	}
-	protected void addTrigger(String trigger) {
+	public void addTrigger(String trigger) {
 		Parser.addTrigger(trigger);
 	}
 
-	private boolean isSpam() {
-		return Botmain.guildManager.spamDetection(messageEvent);
-	}
-	private void performSpamHandling(){
-		BotAction.say(channel,"you need to stop!");
-		long oldTime = System.currentTimeMillis();
-		while(System.currentTimeMillis() < oldTime + 1000);
-		//TODO Create a BotAcion for this: BotAction.say(channel,"/prune 3");
-		Guild guild = messageEvent.getGuild();
-		Member member = messageEvent.getMember();
-		//TODO Create a BotAction for this: guild.getController().setMute(member, true).complete();
-	}
-	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-		for(CommandData c: Botmain.slashCommands)
-			if(SlashCommand.class.isAssignableFrom(c.getClass()))
-			if(event.getName().equals(c.getName())) {
-				SlashCommand sc = (SlashCommand)c;
-				sc.setEvent(event);
-				
-				String reply = sc.getReply();
-				if(reply != null)
-					event.reply(reply).complete();
-				
-				sc.execute();
-				return;
-			}
-		Botmain.handleCommand(event);
-	}
+	
 }

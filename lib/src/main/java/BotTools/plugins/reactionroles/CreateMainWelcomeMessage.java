@@ -1,4 +1,4 @@
-package BotTools.plugins.moderation;
+package BotTools.plugins.reactionroles;
 
 import java.util.ArrayList;
 import java.util.List;

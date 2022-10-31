@@ -2,7 +2,6 @@ package BotTools.commands;
 
 import java.util.ArrayList;
 
-import BotTools.commands.slashcommands.Option;
 import BotTools.main.Parser.CommandContainer;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;

@@ -41,7 +41,7 @@ public abstract class Botmain implements Runnable{
 	public static JDA jda;
 	protected static HashMap<String, Command> commands = new HashMap<String, Command>();
 	public static ArrayList<CommandData> slashCommands = new ArrayList<CommandData>();
-	protected static BotListener listener;
+	public static Responder responder;
 	public static GuildDataParser gdp;
 	public static GuildManager guildManager = new GuildManager();
 	public static ArrayList<String> commandNames = new ArrayList<String>();
@@ -49,6 +49,7 @@ public abstract class Botmain implements Runnable{
 	private static Console console;
 	//private static Console guiConsole = new GuiConsole();
 	protected static XMLReader reader = new XMLReader();
+	private static BotListener listener;
 	private static boolean running, debug;
 	private static long startTime;
 	private static PrintWriter logWriter;
@@ -70,7 +71,6 @@ public abstract class Botmain implements Runnable{
 		initializeBotExistence();	//Initial bot setup
 		createCommand(new HelpCommand());
 		listCommands();				//Old school commands setup
-		listSlashCommands();		//Fancy new "slash" commands setup
 		createAllSlashCommands();
 		// My Systems again
 		gdp.updateServerDatabase();	//Must be after bot and console initialization
@@ -91,14 +91,14 @@ public abstract class Botmain implements Runnable{
 		try { 
 			// TODO figure out how to build JDA again
 			jda = JDABuilder.createDefault(keys[0], EnumSet.allOf(GatewayIntent.class))
-			.addEventListeners(listener = createListener())
+			.addEventListeners(listener = new BotListener())
 			.enableCache(CacheFlag.VOICE_STATE)
 			.enableCache(CacheFlag.EMOJI) 
 			.enableCache(CacheFlag.ONLINE_STATUS)
 			.enableCache(CacheFlag.FORUM_TAGS)
 			.setMemberCachePolicy(MemberCachePolicy.ALL)
 			.build();
-			
+			responder = listener.responder;
 			//jda.getPresence().setGame(Game.of(Game.GameType.DEFAULT, "/help for info"));
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
@@ -108,9 +108,7 @@ public abstract class Botmain implements Runnable{
 		}
 		System.out.println("Completed bot initialization");
 	}
-	protected abstract BotListener createListener();
 	protected abstract void listCommands();
-	protected abstract void listSlashCommands();
 	private static void createAllSlashCommands() {
 		jda.updateCommands().addCommands(slashCommands).complete();
 	}
@@ -225,6 +223,6 @@ public abstract class Botmain implements Runnable{
 		return new GuildDataParser();
 	}
 	protected final void addPlugin(Plugin plugin) {
-		plugin.get().forEach(Botmain::createCommand);
+		plugin.activate();
 	}
 }

@@ -11,7 +11,6 @@ import java.util.concurrent.TimeUnit;
 
 import BotTools.botactions.BotAction;
 import BotTools.botactions.online.OnlineAction;
-import BotTools.commands.slashcommands.Option;
 import BotTools.main.Botmain;
 import BotTools.main.Parser;
 import BotTools.main.Parser.CommandContainer;
@@ -26,6 +25,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
