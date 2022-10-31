@@ -1,4 +1,4 @@
-package BotTools.commands.slashcommands;
+package BotTools.commands;
 
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -14,12 +14,6 @@ public class Option extends OptionData{
 		switch(type) {
 		case "user":
 			return OptionType.USER;
-		case "channel":
-			return OptionType.CHANNEL;
-		case "role":
-			return OptionType.ROLE;
-		case "subcommand":
-			return OptionType.SUB_COMMAND;
 		}
 		return OptionType.STRING;
 	}

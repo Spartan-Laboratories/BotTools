@@ -1,4 +1,4 @@
-package BotTools.plugins.moderation;
+package BotTools.plugins.reactionroles;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +14,7 @@ public class AddReactionRole extends Command {
 	public AddReactionRole() {
 		super("addreactionrole");
 		setHelpMessage("Use this command to tie a server emote to a role");
-		makeSlashCommand();
+		makeInteractible();
 		addOption("integer", "emote", "the reaction emote that you want tied to a role", true);
 		addOption("role", "role", "the role that you want to be given on reaction", true);
 	}

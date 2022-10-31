@@ -165,6 +165,11 @@ public class XMLReader {
 		root.removeChild(child);
 		write();
 	}
+	public void removePossibleTag(Node root, Node child) {
+		if(root == null || child == null)
+			return;
+		removeTag(root, child);
+	}
 	public void removeTag(Node root, String child) {
 		removeTag(root, getChild(root, child));
 	}

@@ -77,19 +77,6 @@ public class GuildManager {
 		guild.getTextChannelsByName(channel, true).get(0).sendMessage(message).complete();
 		System.out.println("Message is sent");
 	}
-	boolean spamDetection(MessageReceivedEvent event){
-		MessageChannel channel = event.getChannel();
-		MessageHistory history = channel.getHistory();
-		final int spamThreshold = 10;
-		history.retrievePast(spamThreshold).complete();
-		List<Message> retrievedMessages = history.getRetrievedHistory();
-		if(retrievedMessages.size() > spamThreshold)
-			return false;
-		for(int i = 1; i < spamThreshold; i++)
-			if(!retrievedMessages.get(i).getContentRaw().equals(event.getMessage().getContentRaw()))
-				return false;
-		return true;
-	}
 	private void checkRankUp(Member member, double previousPoints, double currentPoints){
 		double breachedPoints = 0;
 		for(Integer i: rankRequirements.keySet()){

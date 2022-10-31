@@ -31,9 +31,6 @@ public class GuildDataParser {
 	private String guildPath;
 	private PlaylistDecoder playlistDecoder = new PlaylistDecoder();
 	private final boolean debug = false;
-	public GuildDataParser(){
-		//updateGuildMemberDatabase();
-	}
 	public Double getPromotionPoints(Guild guild, String memberName){
 		setGuildString(guild);
 		reader.setDocument(guildPath + "MemberData.xml");
@@ -47,8 +44,7 @@ public class GuildDataParser {
 		// DO NOT DELETE    use if the infinite whitespace in xml files bug occurs again
 		//for(Guild g: Botmain.jda.getGuilds())Trimmer.trim("C:\\Users\\spart\\OneDrive\\Documents\\Programming\\workspace\\TrumpBotTest\\guildData\\" + g.getName() + "\\MemberData.xml");
 		
-		for(Guild g: Botmain.jda.getGuilds())
-			;//updateServerDatabase(g);
+		Botmain.jda.getGuilds().forEach(guild -> updateServerDatabase(guild));
 		Botmain.out("Finished updating server member database");
 	}
 	
@@ -635,7 +631,7 @@ public class GuildDataParser {
 			e.printStackTrace();
 		}
 		
-		//updateServerDatabase(guild);
+		updateServerDatabase(guild);
 	}
 	public void modBotDataValue(String name, String value) {
 		reader.setDocument("BotData.xml");
@@ -672,5 +668,19 @@ public class GuildDataParser {
 	private String getCurrentDocValue(String name) {
 		Node node = reader.getChild(reader.getRoot(), name);
 		return reader.getValue(node);
+	}
+	public void removeWelcomeMessage(Guild guild, String messageId) {
+		setDocument(guild, "GuildData.xml");
+		Node welcomeMessages = reader.getChild(reader.getRoot(), "welcomeMessages");
+		Node deletedMessage = null;
+		for(Node welcomeMessage: reader.getChildren(welcomeMessages)){
+			Node messageNode = reader.getChild(welcomeMessage, "message");
+			String messageID = reader.getValue(messageNode);
+			if(messageID.equals(messageId)) {
+				deletedMessage = welcomeMessage;
+				break;
+			}
+		}
+		reader.removePossibleTag(welcomeMessages, deletedMessage);
 	}
 }

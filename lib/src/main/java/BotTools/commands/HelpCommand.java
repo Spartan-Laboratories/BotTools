@@ -6,7 +6,7 @@ public class HelpCommand extends Command{
 	public HelpCommand(){
 		super("help");
 		addAlias("halp", "halppls");
-		makeSlashCommand()
+		makeInteractible()
 			.setDescription("See what this bot can do");
 	}
 	@Override
