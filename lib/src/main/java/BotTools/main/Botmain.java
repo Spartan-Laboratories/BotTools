@@ -189,7 +189,8 @@ public abstract class Botmain implements Runnable{
 		getCommands().get(event.getName()).handle(event);
 	}
 	public static void handleCommand(MessageContextInteractionEvent event) {
-		getCommands().get(event.getName()).handle(event);
+		String name = event.getName().toLowerCase().replaceAll(" ", "");
+		getCommands().get(name).handle(event);
 	}
 	public static void createCommand(Command command) {
 		for(String alias : command.getAliasList()){
