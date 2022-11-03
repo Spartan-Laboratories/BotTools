@@ -11,6 +11,7 @@ plugins {
     id 'java-library'
     id 'java'
     id 'application'
+    id 'maven-publish'
 }
 
 repositories {
@@ -55,4 +56,20 @@ dependencies {
 tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform();
+}
+java {
+	withSourcesJar()
+	withJavadocJar()
+}
+publishing {
+    publications {
+        maven(MavenPublication) {
+		from components.java
+        }
+    }
+}
+
+wrapper {
+    gradleVersion = "7.3.3"
+    distributionType = Wrapper.DistributionType.ALL
 }
